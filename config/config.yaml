@@ -4,6 +4,13 @@ web:
   address: 127.0.0.1
   port: 8064
 
+alerting:
+  discord:
+#    webhook-url: "https://discord.com/api/webhooks/1554894267972059136/Ar6CP5u74iYcgpV4rVKg2g9oXPj7aQn_EbiZyzYHvp2UPvR30EITuf-kKGNCPTxsCphn"
+    webhook-url: "https://discord.com/api/webhooks/1555216735643238413/V6VHp_-krvvFfUo-Ibxg5S3HgzgTWUlUWPiotzyBc7ynzwz9_ronco9rmEOIgg4IUVXf"
+    title: ":helmet_with_white_cross: Chainweb Alert"
+
+
 ui:
   default-sort-by: group
   title: Kadena Health Dashboard
@@ -75,6 +82,76 @@ simple-frontend: &simpleFrontend
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 24h"
 
+discord-alert: &general-discord
+  alerts:
+    - type: discord
+      enabled: true
+      failure-threshold: 10
+      minimum-reminder-interval: 24h
+
+ping-everyone: &ping-everyone-discord
+  alerts:
+    - type: discord
+      enabled: true
+      failure-threshold: 10
+      minimum-reminder-interval: 24h
+      provider-override:
+        message-content: "@everyone"
+
+ping-pascal: &ping-pascal-discord
+  alerts:
+    - type: discord
+      enabled: true
+      failure-threshold: 10
+      minimum-reminder-interval: 24h
+      provider-override:
+        message-content: "<@796003016955658261>"
+
+ping-jose: &ping-jose-discord
+  alerts:
+    - type: discord
+      enabled: true
+      failure-threshold: 10
+      minimum-reminder-interval: 24h
+      provider-override:
+        message-content: "<@147166876907208705>"
+
+ping-mightchobo: &ping-mightchobo-discord
+  alerts:
+    - type: discord
+      enabled: true
+      failure-threshold: 10
+      minimum-reminder-interval: 24h
+      provider-override:
+        message-content: "<@104387740291833856>"
+
+ping-amir: &ping-amir-discord
+  alerts:
+    - type: discord
+      enabled: true
+      failure-threshold: 10
+      minimum-reminder-interval: 24h
+      provider-override:
+        message-content: "<@200423297073020929>"
+
+ping-edmund: &ping-edmund-discord
+  alerts:
+    - type: discord
+      enabled: true
+      failure-threshold: 10
+      minimum-reminder-interval: 24h
+      provider-override:
+        message-content: "<@254760420219420672>"
+
+ping-jumbo: &ping-jumbo-discord
+  alerts:
+    - type: discord
+      enabled: true
+      failure-threshold: 10
+      minimum-reminder-interval: 24h
+      provider-override:
+        message-content: "<@1252248874005954562>"
+
 
 endpoints:
   - name: Mnitoring Gateway
@@ -87,61 +164,62 @@ endpoints:
       - "[BODY] == OK"
 
   - name: pl-1 Health
-    <<: *anchorNodeHealth
+    <<: [*anchorNodeHealth, *ping-everyone-discord]
     url: "https://pl-1.chainweb-community.org/chainweb/0.0/mainnet01/cut"
 
   - name: pl-1 Recent Blocks
-    <<: *nodeUpToData
+    <<: [*nodeUpToData, *ping-pascal-discord]
     body: 'node=https://pl-1.chainweb-community.org'
 
   - name: pl-2 Health
-    <<: *anchorNodeHealth
+    <<: [*anchorNodeHealth, *ping-pascal-discord]
     url: "https://pl-2.chainweb-community.org/chainweb/0.0/mainnet01/cut"
 
   - name: pl-2 Recent Blocks
-    <<: *nodeUpToData
+    <<: [*nodeUpToData, *ping-pascal-discord]
     body: 'node=https://pl-2.chainweb-community.org'
 
   - name: nl-1 Health
-    <<: *anchorNodeHealth
+    <<: [*anchorNodeHealth, *ping-pascal-discord]
     url: "https://nl-1.chainweb-community.org/chainweb/0.0/mainnet01/cut"
 
   - name: nl-1 Recent Blocks
-    <<: *nodeUpToData
+    <<: [*nodeUpToData, *ping-pascal-discord]
     body: 'node=https://nl-1.chainweb-community.org'
 
   - name: fr-1 Health
-    <<: *anchorNodeHealth
+    <<: [*anchorNodeHealth, *ping-pascal-discord]
     url: "https://fr-1.chainweb-community.org/chainweb/0.0/mainnet01/cut"
 
   - name: fr-1 Recent Blocks
-    <<: *nodeUpToData
+    <<: [*nodeUpToData, *ping-pascal-discord]
     body: 'node=https://fr-1.chainweb-community.org'
 
   - name: ca-1 Health
-    <<: *anchorNodeHealth
+    <<: [*anchorNodeHealth, *ping-pascal-discord]
     url: "https://ca-1.chainweb-community.org/chainweb/0.0/mainnet01/cut"
 
   - name: ca-1 Recent Blocks
-    <<: *nodeUpToData
+    <<: [*nodeUpToData, *ping-pascal-discord]
     body: 'node=https://ca-1.chainweb-community.org'
 
   - name: us-e1 Health
-    <<: *anchorNodeHealth
+    <<: [*anchorNodeHealth, *ping-everyone-discord]
     url: "https://us-e1.bootstrap.kadinic.com/chainweb/0.0/mainnet01/cut"
 
   - name: us-e1 Recent Blocks
-    <<: *nodeUpToData
+    <<: [*nodeUpToData, *ping-pascal-discord]
     body: "node=https://us-e1.bootstrap.kadinic.com"
 #
 
   - name: Snapshot node Health
-    <<: *anchorOtherNodeHealth
+    <<: [*anchorNodeHealth, *ping-pascal-discord]
     url: "https://54.36.120.70:4430/chainweb/0.0/mainnet01/cut"
 
 
 #
   - name: Chainweb Api health
+    <<: [*general-discord, *ping-everyone-discord]
     group: D - Frontends
     url: https://api.chainweb-community.org/info
     interval: 30s
@@ -154,28 +232,29 @@ endpoints:
       - "has([BODY].nodeChains) == true"
 #
   - name: Tools
-    <<: *simpleFrontend
+    <<: [*simpleFrontend, *general-discord]
     url: https://tools.chainweb-community.org/
 
   - name: Snapshots
-    <<: *simpleFrontend
+    <<: [*simpleFrontend, *general-discord]
     url: https://snapshots.chainweb-community.org/
 
   - name: Explorer
-    <<: *simpleFrontend
+    <<: [*simpleFrontend, *general-discord]
     url: https://explorer.chainweb-community.org/mainnet
 
 
   - name: Kinesis
-    <<: *simpleFrontend
+    <<: [*simpleFrontend, *general-discord]
     url: https://kinesis.kda-chain.org/
 
   - name: Denascan
-    <<: *simpleFrontend
+    <<: [*simpleFrontend, *general-discord]
     url: https://denascan.com/
 
 
   - name: X-chain Gas stations
+    <<: [*general-discord, *ping-everyone-discord]
     group: C - Pact
     url: http://localhost:8090/pact
     interval: 10m
@@ -207,6 +286,7 @@ endpoints:
       - "[BODY].results[19] == true"
 #
   - name: Pact Current Time
+    <<: [*general-discord,*ping-everyone-discord]
     group: C - Pact
     url: http://localhost:8090/pact
     method: POST
@@ -218,6 +298,7 @@ endpoints:
       - "[BODY].results[0] == true"
 
   - name: Mercatus Frontend
+    <<: [*general-discord, *ping-amir-discord]
     group: G - Mercatus
     url: https://mercatus.works
     conditions:
@@ -225,6 +306,7 @@ endpoints:
       - "[CERTIFICATE_EXPIRATION] > 24h"
 #
   - name: Mercatus Backend
+    <<: [*general-discord, *ping-pascal-discord]
     group: G - Mercatus
     url: https://dexapi.kadena.fun/info
     conditions:
@@ -233,6 +315,7 @@ endpoints:
       - "[BODY].status == RUNNING"
 
   - name: Hyperlane Backend
+    <<: *general-discord
     group: E - Hyperlane
     url: https://hyperlane-status.chainweb-community.org/
     interval: 2m
@@ -241,6 +324,7 @@ endpoints:
       - "[CERTIFICATE_EXPIRATION] > 24h"
 #
   - name: Relayer gas - Kadena
+    <<: [*general-discord, *ping-everyone-discord]
     group: E - Hyperlane
     url: http://localhost:8090/pact
     method: POST
@@ -253,6 +337,7 @@ endpoints:
 
 
   - name: Relayer gas - Ethereum
+    <<: [*general-discord, *ping-everyone-discord]
     group: E - Hyperlane
     ui:
       resolve-successful-conditions: true
@@ -267,6 +352,7 @@ endpoints:
       - "[BODY].balance > 4000000"
 
   - name: Hyperlane Backend Status
+    <<: [*general-discord, *ping-everyone-discord]
     group: E - Hyperlane
     url: https://hyperlane-status.chainweb-community.org/admin-actions/bridge-status/mainnet
     interval: 2m
@@ -276,6 +362,7 @@ endpoints:
       - "[BODY].data.evm.paused == false"
 #
   - name: Hyperlane Signer Alcantara
+    <<: [*general-discord, *ping-pascal-discord]
     group: E - Hyperlane
     url: https://raw.githubusercontent.com/kinesis-bridge/kinesis-signatures/refs/heads/main/summary.json
     interval: 2m
@@ -285,6 +372,7 @@ endpoints:
        - "[BODY].validators.eth.alcantara.ok == true"
 #
   - name: Hyperlane Signer huajiang
+    <<: [*general-discord, *ping-pascal-discord]
     group: E - Hyperlane
     url: https://raw.githubusercontent.com/kinesis-bridge/kinesis-signatures/refs/heads/main/summary.json
     interval: 2m
@@ -294,6 +382,7 @@ endpoints:
        - "[BODY].validators.eth.huajiang.ok == true"
 #
   - name: Hyperlane Signer mackinac
+    <<: [*general-discord, *ping-pascal-discord]
     group: E - Hyperlane
     url: https://raw.githubusercontent.com/kinesis-bridge/kinesis-signatures/refs/heads/main/summary.json
     interval: 2m
@@ -303,25 +392,14 @@ endpoints:
        - "[BODY].validators.eth.mackinac.ok == true"
 #
 
-
-
-  #- name: Kinesis kb-ETH Total supply
-  #  group: F - Kinesis
-  #  url: http://localhost:8090/pact
-  #  method: POST
-  #  headers:
-  #    Content-Type: application/json
-  #  body: '{"chains":[2],"cmd":"(>= (coin.get-balance \"r:n_e595727b657fbbb3b8e362a05a7bb8d12865c1ff.relayers\") 0.5)"}'
-  #  conditions:
-  #    - "[STATUS] == 200"
-  #    - "[BODY].results[0]"
-
 suites:
   - name: Kinesis kb-ETH Collateral
+
     group: F - Kinesis
     interval: 5m
     endpoints:
       - name: Kinesis kb-ETH Reserve
+        <<: *general-discord
         method: POST
         ui:
           resolve-successful-conditions: true
@@ -336,6 +414,7 @@ suites:
           reserve: "[BODY].balance"
 
       - name: Kinesis kb-ETH Supply < Reserve
+        <<: *ping-everyone-discord
         url: http://localhost:8090/pact
         ui:
           resolve-successful-conditions: true
@@ -348,10 +427,12 @@ suites:
           - "[BODY].results[0] < [CONTEXT].reserve"
 
   - name: Kinesis kb-USDC Collateral
+
     group: F - Kinesis
     interval: 5m
     endpoints:
       - name: Kinesis kb-USDC Reserve
+        <<: *general-discord
         method: POST
         ui:
           resolve-successful-conditions: true
@@ -367,6 +448,7 @@ suites:
           reserve: "[BODY].balance"
 
       - name: Kinesis kb-USDC Supply < Reserve
+        <<: *ping-everyone-discord
         url: http://localhost:8090/pact
         ui:
           resolve-successful-conditions: true
@@ -384,6 +466,7 @@ suites:
     interval: 30m
     endpoints:
       - name: Hyperlane Eth MailBox Last-Dispatch-ID
+        <<: *general-discord
         group: F - Kinesis
         method: POST
         ui:
@@ -400,6 +483,7 @@ suites:
           latest_id: "[BODY].id"
 
       - name: KDA Dispatch ID delivery
+        <<: *general-discord
         group: F - Kinesis
         url: http://localhost:8090/pact
         ui:
@@ -416,9 +500,8 @@ suites:
     group: E - Hyperlane
     interval: 30m
     endpoints:
-
-
       - name:  Hyperlane KDA MailBox Last-Dispatch-ID
+        <<: *general-discord
         url: http://localhost:8090/pact
         ui:
           resolve-successful-conditions: true
@@ -434,6 +517,7 @@ suites:
           latest_id: "[BODY].results[0]"
 
       - name:  Eth Dispatch ID delivery
+        <<: *general-discord
         method: POST
         ui:
           resolve-successful-conditions: true
