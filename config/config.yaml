@@ -6,7 +6,9 @@ web:
 
 alerting:
   discord:
+# Test server
 #    webhook-url: "https://discord.com/api/webhooks/1554894267972059136/Ar6CP5u74iYcgpV4rVKg2g9oXPj7aQn_EbiZyzYHvp2UPvR30EITuf-kKGNCPTxsCphn"
+# Team server
     webhook-url: "https://discord.com/api/webhooks/1555216735643238413/V6VHp_-krvvFfUo-Ibxg5S3HgzgTWUlUWPiotzyBc7ynzwz9_ronco9rmEOIgg4IUVXf"
     title: ":helmet_with_white_cross: Chainweb Alert"
 
@@ -204,11 +206,11 @@ endpoints:
     body: 'node=https://ca-1.chainweb-community.org'
 
   - name: us-e1 Health
-    <<: [*anchorNodeHealth, *ping-everyone-discord]
+    <<: [*anchorNodeHealth, *ping-mightchobo-discord]
     url: "https://us-e1.bootstrap.kadinic.com/chainweb/0.0/mainnet01/cut"
 
   - name: us-e1 Recent Blocks
-    <<: [*nodeUpToData, *ping-pascal-discord]
+    <<: [*nodeUpToData, *ping-mightchobo-discord]
     body: "node=https://us-e1.bootstrap.kadinic.com"
 #
 
