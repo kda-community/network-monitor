@@ -2,7 +2,7 @@ from aiohttp import ClientSession, TCPConnector, web
 import asyncio
 from decimal import Decimal
 from .client import get_current_blocks_time
-from .eth_client import get_eth_balance_gwei, get_erc20_balance, mailbox_get_latest_dispath_id, mailbox_delivered
+from .eth_client import get_eth_balance_gwei, get_erc20_balance, mailbox_get_latest_dispath_id, mailbox_delivered, get_erc20_total_supply
 from datetime import datetime, timezone
 from pypact.chainweb import Chainweb
 from pypact.kadena_exceptions import KadenaChainError
@@ -34,7 +34,12 @@ async def handle_pact(request):
   async def __do_request(chain):
     try:
       data = await request.app["chainweb"].chains[chain].local_result(cmd, gasLimit=125000)
-      return float(data) if isinstance(data, Decimal) else data
+      if isinstance(data, Decimal):
+        return float(data)
+      if isinstance(data,dict) and 'decimal' in data:
+        return float(data["decimal"])
+      else:
+        return data
 
     except KadenaChainError as e:
       print(str(e))
@@ -68,6 +73,11 @@ async def handle_erc_20_balance(request):
   bal = await get_erc20_balance(data["token"], data["address"])
   return web.json_response({"balance":int(bal)})
 
+async def handle_erc_20_total_supply(request):
+  data = await request.post()
+  supply = await get_erc20_total_supply(data["token"])
+  return web.json_response({"balance":int(supply)})
+
 async def handle_latest_dispatch_id(request):
   data = await request.post()
   print(list(data.keys()))
@@ -89,6 +99,7 @@ def start_app():
   app.add_routes([web.post('/max_age', handle_max_age)])
   app.add_routes([web.post('/eth_balance_gwei', handle_eth_balance_gwei)])
   app.add_routes([web.post('/erc_20_balance', handle_erc_20_balance)])
+  app.add_routes([web.post('/erc_20_total_supply', handle_erc_20_total_supply)])
   app.add_routes([web.post('/latest_dispatch_id', handle_latest_dispatch_id)])
   app.add_routes([web.post('/mailbox_delivered', handle_mailbox_delivered)])
   web.run_app(app, port=8090)

@@ -11,6 +11,14 @@ ERC20_ABI = [
         "stateMutability": "view",
         "inputs": [{"name": "account", "type": "address"}],
         "outputs": [{"name": "", "type": "uint256"}],
+    },
+
+    {
+        "name":"totalSupply",
+        "type":"function",
+        "stateMutability":"view",
+        "inputs":[],
+        "outputs":[{"name":"","type":"uint256"}]
     }
 ]
 
@@ -40,6 +48,10 @@ async def get_eth_balance_gwei(addr):
 async def get_erc20_balance(token_address, address):
   token = w3.eth.contract(address=Web3.to_checksum_address(token_address), abi=ERC20_ABI)
   return await token.functions.balanceOf(Web3.to_checksum_address(address)).call()
+
+async def get_erc20_total_supply(token_address):
+  token = w3.eth.contract(address=Web3.to_checksum_address(token_address), abi=ERC20_ABI)
+  return await token.functions.totalSupply().call()
 
 async def mailbox_get_latest_dispath_id(addr):
   mailbox = w3.eth.contract(address=addr,abi=MAILBOX_ABI)
