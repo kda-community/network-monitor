@@ -1,8 +1,12 @@
-skip-invalid-config-update: true
-
 web:
   address: 127.0.0.1
   port: 8064
+
+storage:
+  type: sqlite
+  path: gatus_data.db
+  maximum-number-of-results: 2000
+  maximum-number-of-events: 20
 
 alerting:
   discord:
@@ -24,7 +28,7 @@ default-node-health: &anchorNodeHealth
   group: A - Bootstrap nodes Health
   interval: 30s
   client:
-    insecure: true
+    insecure: false
   conditions:
     - "[CONNECTED] == true"
     - "[STATUS] == 200"
@@ -34,7 +38,7 @@ default-node-health: &anchorNodeHealth
 
 other-node-health: &anchorOtherNodeHealth
   group: Z - Other important nodes Health
-  interval: 30s
+  interval: 5m
   client:
     insecure: true
   conditions:
@@ -43,7 +47,6 @@ other-node-health: &anchorOtherNodeHealth
     - "[CERTIFICATE_EXPIRATION] > 24h"
     - "[BODY].instance == mainnet01"
     - "has([BODY].hashes) == true"
-
 
 default-node up-to-date: &nodeUpToData
   group: B - Bootstrap nodes Recent Cut
@@ -74,7 +77,6 @@ default-node up-to-date: &nodeUpToData
     - "[BODY].age[17] < 300"
     - "[BODY].age[18] < 300"
     - "[BODY].age[19] < 300"
-
 
 
 simple-frontend: &simpleFrontend
@@ -156,6 +158,7 @@ ping-jumbo: &ping-jumbo-discord
 
 
 endpoints:
+### KDA Monitoring Gateway
   - name: Mnitoring Gateway
     group: "0 - Monitoring Gateway"
     url: http://localhost:8090/
@@ -165,6 +168,7 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY] == OK"
 
+### Bootstrap nodes
   - name: pl-1 Health
     <<: [*anchorNodeHealth, *ping-everyone-discord]
     url: "https://pl-1.chainweb-community.org/chainweb/0.0/mainnet01/cut"
@@ -212,14 +216,19 @@ endpoints:
   - name: us-e1 Recent Blocks
     <<: [*nodeUpToData, *ping-mightchobo-discord]
     body: "node=https://us-e1.bootstrap.kadinic.com"
-#
 
+
+## Other nodes
   - name: Snapshot node Health
-    <<: [*anchorNodeHealth, *ping-pascal-discord]
+    <<: [*anchorOtherNodeHealth, *ping-pascal-discord]
     url: "https://54.36.120.70:4430/chainweb/0.0/mainnet01/cut"
 
+  - name: Champaign node Health
+    <<: [*anchorOtherNodeHealth, *ping-jumbo-discord]
+    url: "https://169.58.34.67:1789/chainweb/0.0/mainnet01/cut"
 
-#
+
+### Chainweb API
   - name: Chainweb Api health
     <<: [*general-discord, *ping-everyone-discord]
     group: D - Frontends
@@ -230,9 +239,10 @@ endpoints:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 24h"
       - "[BODY].nodeVersion == mainnet01"
-      - "[BODY].nodePackageVersion == 3.2"
+      - "[BODY].nodePackageVersion == any(3.2, 3.2.1)"
       - "has([BODY].nodeChains) == true"
-#
+
+### Frontends
   - name: Tools
     <<: [*simpleFrontend, *general-discord]
     url: https://tools.chainweb-community.org/
@@ -245,7 +255,6 @@ endpoints:
     <<: [*simpleFrontend, *general-discord]
     url: https://explorer.chainweb-community.org/mainnet
 
-
   - name: Kinesis
     <<: [*simpleFrontend, *general-discord]
     url: https://kinesis.kda-chain.org/
@@ -254,9 +263,9 @@ endpoints:
     <<: [*simpleFrontend, *general-discord]
     url: https://denascan.com/
 
-
+### X-Chain Gas stations
   - name: X-chain Gas stations
-    <<: [*general-discord, *ping-everyone-discord]
+    <<: *ping-everyone-discord
     group: C - Pact
     url: http://localhost:8090/pact
     interval: 10m
@@ -286,9 +295,10 @@ endpoints:
       - "[BODY].results[17] == true"
       - "[BODY].results[18] == true"
       - "[BODY].results[19] == true"
-#
+
+### Pact current time
   - name: Pact Current Time
-    <<: [*general-discord,*ping-everyone-discord]
+    <<: *ping-everyone-discord
     group: C - Pact
     url: http://localhost:8090/pact
     method: POST
@@ -299,34 +309,39 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY].results[0] == true"
 
+
+### Mercatus
   - name: Mercatus Frontend
-    <<: [*general-discord, *ping-amir-discord]
+    <<: *ping-amir-discord
     group: G - Mercatus
     url: https://mercatus.works
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 24h"
-#
+
   - name: Mercatus Backend
-    <<: [*general-discord, *ping-pascal-discord]
+    <<: *ping-pascal-discord
     group: G - Mercatus
     url: https://dexapi.kadena.fun/info
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 24h"
-      - "[BODY].status == RUNNING"
+      - "[BODY].status == any(RUNNING, CACHING)"
 
-  - name: Hyperlane Backend
-    <<: *general-discord
+### Hyperlane Backend : Currently hsoted on GH
+  - name: Hyperlane Backend Status
+    <<: *ping-everyone-discord
     group: E - Hyperlane
-    url: https://hyperlane-status.chainweb-community.org/
+    url: https://hyperlane-status.chainweb-community.org/admin-actions/bridge-status/mainnet
     interval: 2m
     conditions:
       - "[STATUS] == 200"
-      - "[CERTIFICATE_EXPIRATION] > 24h"
-#
+      - "[BODY].data.kda.paused == false"
+      - "[BODY].data.evm.paused == false"
+
+### Gas for Hyperlane relayer on Kadena
   - name: Relayer gas - Kadena
-    <<: [*general-discord, *ping-everyone-discord]
+    <<: *ping-everyone-discord
     group: E - Hyperlane
     url: http://localhost:8090/pact
     method: POST
@@ -337,9 +352,9 @@ endpoints:
       - "[STATUS] == 200"
       - "[BODY].results[0] > 1000"
 
-
+### Gas for Hyperlane relayer on Ethereum
   - name: Relayer gas - Ethereum
-    <<: [*general-discord, *ping-everyone-discord]
+    <<: *ping-everyone-discord
     group: E - Hyperlane
     ui:
       resolve-successful-conditions: true
@@ -353,18 +368,9 @@ endpoints:
       - "[BODY].balance > 0"
       - "[BODY].balance > 4000000"
 
-  - name: Hyperlane Backend Status
-    <<: [*general-discord, *ping-everyone-discord]
-    group: E - Hyperlane
-    url: https://hyperlane-status.chainweb-community.org/admin-actions/bridge-status/mainnet
-    interval: 2m
-    conditions:
-      - "[STATUS] == 200"
-      - "[BODY].data.kda.paused == false"
-      - "[BODY].data.evm.paused == false"
-#
-  - name: Hyperlane Signer Alcantara
-    <<: [*general-discord, *ping-pascal-discord]
+### Hyperlane Validators
+  - name: Hyperlane Signer alcantara
+    <<: *ping-pascal-discord
     group: E - Hyperlane
     url: https://raw.githubusercontent.com/kinesis-bridge/kinesis-signatures/refs/heads/main/summary.json
     interval: 2m
@@ -372,9 +378,9 @@ endpoints:
        - "[STATUS] == 200"
        - "[BODY].validators.kadena.alcantara.ok == true"
        - "[BODY].validators.eth.alcantara.ok == true"
-#
+
   - name: Hyperlane Signer huajiang
-    <<: [*general-discord, *ping-pascal-discord]
+    <<: *ping-pascal-discord
     group: E - Hyperlane
     url: https://raw.githubusercontent.com/kinesis-bridge/kinesis-signatures/refs/heads/main/summary.json
     interval: 2m
@@ -382,9 +388,9 @@ endpoints:
        - "[STATUS] == 200"
        - "[BODY].validators.kadena.huajiang.ok == true"
        - "[BODY].validators.eth.huajiang.ok == true"
-#
+
   - name: Hyperlane Signer mackinac
-    <<: [*general-discord, *ping-pascal-discord]
+    <<: *ping-pascal-discord
     group: E - Hyperlane
     url: https://raw.githubusercontent.com/kinesis-bridge/kinesis-signatures/refs/heads/main/summary.json
     interval: 2m
@@ -392,13 +398,46 @@ endpoints:
        - "[STATUS] == 200"
        - "[BODY].validators.kadena.mackinac.ok == true"
        - "[BODY].validators.eth.mackinac.ok == true"
-#
+
 
 suites:
-  - name: Kinesis kb-ETH Collateral
-
+  - name: Kinesis kb-KDA Collateral
     group: F - Kinesis
-    interval: 5m
+    interval: 1m
+    endpoints:
+      - name: Kinesis kb-KDA Reserve
+        <<: *general-discord
+        url: http://localhost:8090/pact
+        ui:
+          resolve-successful-conditions: true
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"chains":[2],"cmd":"(round (* 1000000000000.0 (coin.get-balance \"c:TLKMz0rO15FnZARzjvdoT6FHMGWqc8NGI0V_p2KvjY4\")) 0)"}'
+        conditions:
+          - "[STATUS] == 200"
+          - "[BODY].results[0] > 1000"
+        store:
+          reserve: "[BODY].results[0]"
+
+      - name: Kinesis kb-KDA Supply < Reserve
+        <<: *ping-everyone-discord
+        method: POST
+        ui:
+          resolve-successful-conditions: true
+
+        url: http://localhost:8090/erc_20_total_supply
+
+        headers:
+          Content-Type: application/x-www-form-urlencoded
+        body: 'token=0x7786F1eb2eC198A04d8f5e3Fc36fAB14da370076'
+        conditions:
+          - "[STATUS] == 200"
+          - "[BODY].balance < [CONTEXT].reserve"
+
+  - name: Kinesis kb-ETH Collateral
+    group: F - Kinesis
+    interval: 1m
     endpoints:
       - name: Kinesis kb-ETH Reserve
         <<: *general-discord
@@ -428,10 +467,10 @@ suites:
           - "[STATUS] == 200"
           - "[BODY].results[0] < [CONTEXT].reserve"
 
-  - name: Kinesis kb-USDC Collateral
 
+  - name: Kinesis kb-USDC Collateral
     group: F - Kinesis
-    interval: 5m
+    interval: 1m
     endpoints:
       - name: Kinesis kb-USDC Reserve
         <<: *general-discord
@@ -465,7 +504,7 @@ suites:
 
   - name: Hyperlane Message Dispatch Eth to KDA (not Fatal)
     group: E - Hyperlane
-    interval: 30m
+    interval: 5m
     endpoints:
       - name: Hyperlane Eth MailBox Last-Dispatch-ID
         <<: *general-discord
@@ -500,7 +539,7 @@ suites:
 
   - name: Hyperlane Message Dispatch KDA to Eth (not Fatal)
     group: E - Hyperlane
-    interval: 30m
+    interval: 15m
     endpoints:
       - name:  Hyperlane KDA MailBox Last-Dispatch-ID
         <<: *general-discord
