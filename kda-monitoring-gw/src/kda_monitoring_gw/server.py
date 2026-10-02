@@ -2,7 +2,7 @@ from aiohttp import ClientSession, TCPConnector, web
 import asyncio
 from decimal import Decimal
 from .client import get_current_blocks_time
-from .eth_client import get_eth_balance_gwei, get_erc20_balance, mailbox_get_latest_dispath_id, mailbox_delivered, get_erc20_total_supply
+from .eth_client import get_eth_balance_gwei, get_erc20_balance, mailbox_get_latest_dispath_id, mailbox_delivered, get_erc20_total_supply, get_tree_hook_count
 from datetime import datetime, timezone
 from pypact.chainweb import Chainweb
 from pypact.kadena_exceptions import KadenaChainError
@@ -84,6 +84,12 @@ async def handle_latest_dispatch_id(request):
   _id = await mailbox_get_latest_dispath_id(data["address"])
   return web.json_response({"id":_id})
 
+async def handle_tree_hook_count(request):
+  data = await request.post()
+  print(list(data.keys()))
+  cnt = await get_tree_hook_count(data["address"])
+  return web.json_response({"count":cnt})
+
 async def handle_mailbox_delivered(request):
   data = await request.post()
   print(list(data.keys()))
@@ -102,4 +108,5 @@ def start_app():
   app.add_routes([web.post('/erc_20_total_supply', handle_erc_20_total_supply)])
   app.add_routes([web.post('/latest_dispatch_id', handle_latest_dispatch_id)])
   app.add_routes([web.post('/mailbox_delivered', handle_mailbox_delivered)])
+  app.add_routes([web.post('/tree_hook_count', handle_tree_hook_count)])
   web.run_app(app, port=8090)

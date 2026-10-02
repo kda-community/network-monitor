@@ -39,6 +39,16 @@ MAILBOX_ABI = [
     },
 ]
 
+TREE_HOOK_ABI = [
+    {
+      "inputs":[],
+      "name":"count",
+      "outputs":[{"internalType":"uint32","name":"","type":"uint32"}],
+      "stateMutability":"view",
+      "type":"function"
+    }
+]
+
 
 
 async def get_eth_balance_gwei(addr):
@@ -61,3 +71,8 @@ async def mailbox_get_latest_dispath_id(addr):
 async def mailbox_delivered(addr, _id):
   mailbox = w3.eth.contract(address=addr,abi=MAILBOX_ABI)
   return await mailbox.functions.delivered(HexBytes(_id)).call()
+
+async def get_tree_hook_count(addr):
+  hook = w3.eth.contract(address=addr, abi=TREE_HOOK_ABI)
+  result = await hook.functions.count().call()
+  return result - 1
