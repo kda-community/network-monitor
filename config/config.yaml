@@ -705,3 +705,29 @@ suites:
         url: https://kadena-hyperlane-sigs-963540390590-us-east-1-an.s3.amazonaws.com/sigs-mackinac-eth/checkpoint_latest_index.json
         alerts:
           - <<: *ping-pascal-discord
+
+  - name: Hyperlane Eth Signer vinteCincoAbril
+    group: E - Hyperlane
+    interval: 15m
+    endpoints:
+      - name: ref-tree-height-eth-vinteCincoAbril
+        <<: *merkleEthRefheight
+
+      - name: tree-height-eth-vinteCincoAbril
+        <<: *s3Height
+        url: https://kadena-hyperlane-sigs-963540390590-us-east-1-an.s3.amazonaws.com/sigs-vinteCincoAbril-eth/checkpoint_latest_index.json
+        alerts:
+          - <<: *ping-jumbo-discord
+
+  - name: Hyperlane Kadena Signer vinteCincoAbril
+    group: E - Hyperlane
+    interval: 15m
+    endpoints:
+      - name: ref-tree-height-kda-vinteCincoAbril
+        <<: *merkleKdaRefHeight
+
+      - name: tree-height-kda-vinteCincoAbril
+        <<: *s3Height
+        url: https://kadena-hyperlane-sigs-963540390590-us-east-1-an.s3.amazonaws.com/sigs-vinteCincoAbril-kadena/checkpoint_latest_index.json
+        alerts:
+          - <<: *ping-jumbo-discord
