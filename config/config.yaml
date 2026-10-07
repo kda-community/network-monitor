@@ -288,6 +288,12 @@ endpoints:
     alerts:
       - <<: *ping-jumbo-discord
 
+  - name: de-1 node Health (api frontend)
+    <<: *anchorOtherNodeHealth
+    url: "https://45.84.138.87:1789/chainweb/0.0/mainnet01/cut"
+    alerts:
+      - <<: *ping-pascal-discord
+
 
 ### Chainweb API
   - name: Chainweb Api health
