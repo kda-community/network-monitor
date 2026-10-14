@@ -310,6 +310,20 @@ endpoints:
     alerts:
       - <<: *ping-everyone-discord
 
+  - name: Chainweb Api EU health
+    group: D - Frontends
+    url: https://api.eu.chainweb-community.org/info
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 24h"
+      - "[BODY].nodeVersion == mainnet01"
+      - "[BODY].nodePackageVersion == any(3.2, 3.2.1)"
+      - "has([BODY].nodeChains) == true"
+    alerts:
+      - <<: *ping-everyone-discord
+
 ### Frontends
   - name: Tools
     <<: *simpleFrontend
