@@ -5,6 +5,9 @@ from .client import get_current_blocks_time
 from .eth_client import get_eth_balance_gwei, get_erc20_balance, mailbox_get_latest_dispath_id, mailbox_delivered, get_erc20_total_supply, get_tree_hook_count
 from datetime import datetime, timezone
 from pypact.chainweb import Chainweb
+from pypact.signers import KdaSigner
+from pypact.pact_rest_api import SignerCabability
+from pypact.kadena_keys import SigningKey
 from pypact.kadena_exceptions import KadenaChainError
 from string import Template
 
@@ -28,7 +31,6 @@ async def handle_root(request):
 
 async def handle_pact(request):
   data = await request.json()
-  print(data["cmd"])
   cmd = Template(data["cmd"]).substitute(current_time=current_time())
   print(cmd)
   async def __do_request(chain):
@@ -48,6 +50,21 @@ async def handle_pact(request):
   result = await asyncio.gather(*map(__do_request, data["chains"]))
   print(result)
   return web.json_response({"results":result})
+
+async def handle_trx(request):
+  data = await request.json()
+  chain = request.app["chainweb"].chains[data["chain"]]
+  print(data["cmd"])
+  signer =  KdaSigner(SigningKey(secret=data["key"]))
+  trx = chain.create_command(data["cmd"], sender=signer.k_account)
+  trx.add_signer(signer,  SignerCabability("coin.GAS"))
+
+  res = await chain.send(trx)
+  print(await chain.poll_until(res))
+  await asyncio.sleep(10.0)
+
+  return web.json_response({"reqKey":trx.hash})
+
 
 async def handle_age(request):
   data = await request.post()
@@ -101,6 +118,7 @@ def start_app():
   app.cleanup_ctx.append(client_session_ctx)
   app.add_routes([web.get('/', handle_root)])
   app.add_routes([web.post('/pact', handle_pact)])
+  app.add_routes([web.post('/trx', handle_trx)])
   app.add_routes([web.post('/age', handle_age)])
   app.add_routes([web.post('/max_age', handle_max_age)])
   app.add_routes([web.post('/eth_balance_gwei', handle_eth_balance_gwei)])

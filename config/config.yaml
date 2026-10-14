@@ -752,3 +752,40 @@ suites:
         url: https://kadena-hyperlane-sigs-963540390590-us-east-1-an.s3.amazonaws.com/sigs-vinteCincoAbril-kadena/checkpoint_latest_index.json
         alerts:
           - <<: *ping-jumbo-discord
+
+
+  ## Pact Test Transaction
+  - name: Pact Test Transaction
+    group: C - Pact
+    interval: 60m
+
+    endpoints:
+      - name: Send Transaction
+        url: http://localhost:8090/trx
+        client:
+          timeout: 300s
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"chain":0,"cmd":"(free.live-tester.do-test)", "key":"${PRIVATE_KEY}"}'
+        conditions:
+          - "[STATUS] == 200"
+          - has([BODY].reqKey) == true
+        store:
+          req_key: "[BODY].reqKey"
+        alerts:
+          - <<: *ping-everyone-discord
+
+      - name: Test Result
+        ui:
+          resolve-successful-conditions: true
+        url: http://localhost:8090/pact
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"chains":[0],"cmd":"(free.live-tester.is-test-ok \"[CONTEXT].req_key\")"}'
+        conditions:
+          - "[STATUS] == 200"
+          - "[BODY].results[0] == true"
+        alerts:
+          - <<: *general-discord

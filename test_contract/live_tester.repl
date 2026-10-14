@@ -1,0 +1,13 @@
+(begin-tx)
+(load "live_tester.pact")
+(commit-tx)
+
+
+(begin-tx)
+  (env-hash (hash "Hello"))
+  (live-tester.do-test)
+
+  (expect "Existent TX" true (live-tester.is-test-ok (hash "Hello")))
+  (expect "Non-Existent TX" false (live-tester.is-test-ok (hash "Hello Not Exits")))
+
+(commit-tx)

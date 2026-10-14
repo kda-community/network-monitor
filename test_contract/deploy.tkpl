@@ -1,0 +1,15 @@
+codeFile: live_tester.pact
+
+data:
+
+publicMeta:
+  chainId: "0"
+  sender: k:b6fa1c8173b7781883fd2ba311d1844f0eb09347403445c1da800af2d35a49f5
+  gasLimit: 50000
+  gasPrice: 0.00000001
+  ttl: 3600
+networkId: mainnet01
+signers:
+  - public: b6fa1c8173b7781883fd2ba311d1844f0eb09347403445c1da800af2d35a49f5
+    caps: []
+type: exec
