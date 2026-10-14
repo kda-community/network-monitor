@@ -271,6 +271,7 @@ endpoints:
 #
   - name: us-e1 Recent Blocks
     <<: *nodeUpToData
+    body: 'node=https://us-e1.bootstrap.kadinic.com"
     alerts:
       - <<: *ping-mightchobo-discord
 
